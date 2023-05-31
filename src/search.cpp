@@ -925,6 +925,11 @@ moves_loop: // When in check, search starts here
                          && (tte->bound() & BOUND_UPPER)
                          && tte->depth() >= depth;
 
+    bool likelyFailHigh =   PvNode
+                         && ttMove
+                         && (tte->bound() & BOUND_LOWER)
+                         && tte->depth() >= depth;
+
     // Step 13. Loop through all pseudo-legal moves until no moves remain
     // or a beta cutoff occurs.
     while ((move = mp.next_move(moveCountPruning)) != MOVE_NONE)
@@ -1137,6 +1142,13 @@ moves_loop: // When in check, search starts here
       if (   ss->ttPv
           && !likelyFailLow)
           r -= cutNode && tte->depth() >= depth + 3 ? 3 : 2;
+
+      // Increase reduction if position is or has been on the PV
+      // and node is not likely to fail high.
+      // Increase further on cutNodes.
+      if (   ss->ttPv
+          && !likelyFailHigh)
+          r += cutNode && tte->depth() >= depth + 3 ? 3 : 2;
 
       // Decrease reduction if opponent's move count is high (~1 Elo)
       if ((ss-1)->moveCount > 8)
